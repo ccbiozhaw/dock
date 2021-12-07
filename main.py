@@ -3,6 +3,8 @@ PyMOL Plugin
 
 '''
 
+st = "make a change"
+
 
 import os
 import sys
