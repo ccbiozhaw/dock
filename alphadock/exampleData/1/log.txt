@@ -1,0 +1,344 @@
+/home/ubuntu/miniconda3/condabin/conda run mk_prepare_ligand.py -i sele_preview.sdf -o sele_preview.pdbqt --add_hydrogen --pH 7.4
+1 6 C C
+
+2 6 C C
+
+3 6 C C
+
+4 6 C C
+
+5 6 C C
+
+6 6 C C
+
+7 6 C C
+
+8 6 C C
+
+9 6 C C
+
+10 6 C C
+
+11 6 C C
+
+12 6 C C
+
+13 6 C C
+
+14 6 C C
+
+15 6 C C
+
+16 6 C C
+
+17 6 C C
+
+18 6 C C
+
+19 6 C C
+
+20 6 C C
+
+21 6 C C
+
+22 7 N N
+
+23 7 N N
+
+24 1 H H
+
+25 1 H H
+
+26 1 H H
+
+27 1 H H
+
+28 1 H H
+
+29 1 H H
+
+30 1 H H
+
+31 1 H H
+
+32 1 H H
+
+33 1 H H
+
+34 1 H H
+
+35 1 H H
+
+36 1 H H
+
+37 1 H H
+
+38 1 H H
+
+39 1 H H
+
+40 1 H H
+
+41 1 H H
+
+42 1 H H
+
+43 1 H H
+
+44 1 H H
+
+45 1 H H
+
+46 1 H H
+
+47 1 H H
+
+48 1 H H
+
+49 1 H H
+
+50 1 H H
+
+51 1 H H
+
+52 1 H H
+
+53 1 H H
+
+54 1 H H
+
+1 6 C C
+
+2 6 C C
+
+3 6 C C
+
+4 6 C C
+
+5 6 C C
+
+6 6 C C
+
+7 6 C C
+
+8 6 C C
+
+9 6 C C
+
+10 6 C C
+
+11 6 C C
+
+12 6 C C
+
+13 6 C C
+
+14 6 C C
+
+15 6 C C
+
+16 6 C C
+
+17 6 C C
+
+18 6 C C
+
+19 6 C C
+
+20 6 C C
+
+21 6 C C
+
+22 7 N N
+
+23 7 N N
+
+24 1 H H
+
+25 1 H H
+
+26 1 H H
+
+27 1 H H
+
+28 1 H H
+
+29 1 H H
+
+30 1 H H
+
+31 1 H H
+
+32 1 H H
+
+33 1 H H
+
+34 1 H H
+
+35 1 H H
+
+36 1 H H
+
+37 1 H H
+
+38 1 H H
+
+39 1 H H
+
+40 1 H H
+
+41 1 H H
+
+42 1 H H
+
+43 1 H H
+
+44 1 H H
+
+45 1 H H
+
+46 1 H H
+
+47 1 H H
+
+48 1 H H
+
+49 1 H H
+
+50 1 H H
+
+51 1 H H
+
+52 1 H H
+
+53 1 H H
+
+54 1 H H
+
+
+
+==============================
+
+*** Open Babel Warning  in ReadMolecule
+
+  Failed to kekulize aromatic bonds in MOL file (title is welo5)
+
+
+
+
+
+/bin/bash /home/ubuntu/ADFRsuite_x86_64Linux_1.0/bin/prepare_receptor -r b__preview.pdb -o b__preview.pdbqt -A hydrogens -v -U nphs_lps_waters 
+set verbose to  True
+
+set cleanup to  nphs_lps_waters
+
+read  b__preview.pdb
+
+setting up RPO with mode= automatic and outputfilename=  b__preview.pdbqt
+
+charges_to_add= gasteiger
+
+delete_single_nonstd_residues= None
+
+adding gasteiger charges to peptide
+
+./../../vina_1.2.2_linux_x86_64 --receptor b__preview.pdbqt --ligand sele_preview.pdbqt  --config config.txt --cpu 32 --seed 42 --exhaustiveness 8 --out sele_vina_out.pdbqt
+AutoDock Vina v1.2.2
+
+#################################################################
+
+# If you used AutoDock Vina in your work, please cite:          #
+
+#                                                               #
+
+# J. Eberhardt, D. Santos-Martins, A. F. Tillack, and S. Forli  #
+
+# AutoDock Vina 1.2.0: New Docking Methods, Expanded Force      #
+
+# Field, and Python Bindings, J. Chem. Inf. Model. (2021)       #
+
+# DOI 10.1021/acs.jcim.1c00203                                  #
+
+#                                                               #
+
+# O. Trott, A. J. Olson,                                        #
+
+# AutoDock Vina: improving the speed and accuracy of docking    #
+
+# with a new scoring function, efficient optimization and       #
+
+# multithreading, J. Comp. Chem. (2010)                         #
+
+# DOI 10.1002/jcc.21334                                         #
+
+#                                                               #
+
+# Please see https://github.com/ccsb-scripps/AutoDock-Vina for  #
+
+# more information.                                             #
+
+#################################################################
+
+
+
+Scoring function : vina
+
+Rigid receptor: b__preview.pdbqt
+
+Ligand: sele_preview.pdbqt
+
+Center: X -34.8 Y -16.2 Z -23.3
+
+Size: X 10 Y 10 Z 10
+
+Grid space: 0.375
+
+Exhaustiveness: 8
+
+CPU: 32
+
+Verbosity: 1
+
+
+
+Computing Vina grid ... done.
+
+Performing docking (random seed: 42) ... 
+
+0%   10   20   30   40   50   60   70   80   90   100%
+
+|----|----|----|----|----|----|----|----|----|----|
+
+***************************************************
+
+
+
+mode |   affinity | dist from best mode
+
+     | (kcal/mol) | rmsd l.b.| rmsd u.b.
+
+-----+------------+----------+----------
+
+   1       -7.854          0          0
+
+   2       -7.358      1.955      5.753
+
+   3       -7.151      2.061      5.606
+
+   4       -6.836      1.658      5.706
+
+   5       -6.828      2.309      4.697
+
+   6       -6.788      1.837      5.654
+
+   7       -6.347      1.815      4.033
+
+   8       -6.241      2.277      4.973
+
+   9       -6.223      2.043      4.065
+
+WARNING: At low exhaustiveness, it may be impossible to utilize all CPUs.
+
+/bin/bash /home/ubuntu/ADFRsuite_x86_64Linux_1.0/bin/obabel -i pdbqt sele_vina_out.pdbqt -o mol2 -O converted_poses.mol2
+9 molecules converted
+
