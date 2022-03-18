@@ -10,8 +10,4 @@ def sort_history(in_dict):
         max_experiment = 0
     d = [str(x) for x in d]
 
-    # ".ini" in os.listdir(in_dict)
-
-    # if is_save:
-    #     d += ["temp"]
     return d, max_experiment

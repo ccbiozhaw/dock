@@ -20,7 +20,7 @@ except:
     from pip._internal import main
     main(['install', 'paramiko'])
 
-DEBUG = False
+DEBUG = True
 
 
 class dock_gui(QtWidgets.QMainWindow):
@@ -118,20 +118,20 @@ class dock_gui(QtWidgets.QMainWindow):
             }
         }
 
-        if os.path.exists(self.directory + self.project_name + "/" + 'restore.pickle'):
-            with open(self.directory + self.project_name + "/" + 'restore.pickle', 'rb') as handle:
+        self.loaded_state_ = self.directory + self.project_name + "/" + 'restore.pickle'
+
+        if os.path.exists(self.loaded_state_):
+            with open(self.loaded_state_, 'rb') as handle:
                 update_restore = pickle.load(handle)
 
             update_restore.update(restore)
 
-            with open(self.directory + self.project_name + "/" + 'restore.pickle', 'wb') as handle:
+            with open(self.loaded_state_, 'wb') as handle:
                 pickle.dump(update_restore, handle, protocol=4)
 
         else:
-            with open(self.directory + self.project_name + "/" + 'restore.pickle', 'wb') as handle:
+            with open(self.loaded_state_, 'wb') as handle:
                 pickle.dump(restore, handle, protocol=4)
-
-        self.loaded_state_ = self.directory + self.project_name + "/" + 'restore.pickle'
 
         self.update_history_()
 
