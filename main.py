@@ -2,13 +2,14 @@
 PyMOL Plugin
 
 '''
-
 import os
 import sys
 
 sys.path.insert(1, os.path.dirname(__file__))
-from alphadock import *
 
+from PyQt5.QtWidgets import QApplication
+
+from alphadock import *
 
 def __init_plugin__(app=None):
     '''

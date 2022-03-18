@@ -2,6 +2,7 @@ import math
 import pickle
 import random
 import time
+import os
 
 from PyQt5.QtCore import QSettings
 from pymol import cmd
@@ -9,7 +10,8 @@ from pymol.Qt import QtWidgets
 from pymol.Qt.utils import loadUi
 from pymol.cgo import BEGIN, VERTEX, END, LINES
 
-from .helper import *
+from alphadock.helper import *
+from config import HELP_PATH, HOSTS
 
 
 try:
@@ -30,7 +32,8 @@ class dock_gui(QtWidgets.QMainWindow):
 
     def initUi(self):
 
-        uifile = os.path.join(os.path.dirname(__file__), "untitled.ui")
+        uifile = os.path.join(os.path.dirname(__file__),
+                              "ui_files/mainWindow.ui")
         self.form = loadUi(uifile, self)
 
         self.selections = ["None"] + cmd.get_names("all")
@@ -42,11 +45,12 @@ class dock_gui(QtWidgets.QMainWindow):
             pass
 
         UIFunctions.update_style_(self)
-        UIFunctions.update_menus_(self.form)
+        UIFunctions.update_menus_(self.form, HOSTS)
         UIFunctions.definitions_(self)
-        UIFunctions.inputs_(self)
+        UIFunctions.inputs_(self, HELP_PATH)
 
-        if DEBUG: self.form.pushButton_1.clicked.connect(self.db)
+        if DEBUG:
+            self.form.pushButton_1.clicked.connect(self.db)
 
         self.startup_()
 
@@ -70,9 +74,12 @@ class dock_gui(QtWidgets.QMainWindow):
         self.form.lineEdit_2.setText("-v")
 
         self.form.lineEdit_3.setText("--add_hydrogen --pH 7.4")
-        self.form.lineEdit_4.setText("10"); self.x = 10.
-        self.form.lineEdit_5.setText("10"); self.y = 10.
-        self.form.lineEdit_6.setText("10"); self.z = 10.
+        self.form.lineEdit_4.setText("10")
+        self.x = 10.
+        self.form.lineEdit_5.setText("10")
+        self.y = 10.
+        self.form.lineEdit_6.setText("10")
+        self.z = 10.
 
         self.form.comboBox_5.addItems(["vina", "ad4"])
         self.form.lineEdit_8.setText(f"--seed 42 --exhaustiveness 8")
@@ -135,7 +142,8 @@ class dock_gui(QtWidgets.QMainWindow):
         serialize_dict = OrderedDict()
 
         # comboboxes with information of pymol states
-        AllItems = [self.form.comboBox_1.itemText(i) for i in range(self.form.comboBox_1.count())]
+        AllItems = [self.form.comboBox_1.itemText(
+            i) for i in range(self.form.comboBox_1.count())]
         indexes_all_ = []
 
         for c in self.comboboxes_all_:
@@ -147,7 +155,8 @@ class dock_gui(QtWidgets.QMainWindow):
         serialize_dict["comboboxes_all_index_"] = indexes_all_
 
         # combobox for the force field
-        AllItems_FF = [self.form.comboBox_5.itemText(i) for i in range(self.form.comboBox_5.count())]
+        AllItems_FF = [self.form.comboBox_5.itemText(
+            i) for i in range(self.form.comboBox_5.count())]
         indexes_FF_ = []
 
         for c in self.comboboxes_FF_:
@@ -162,7 +171,8 @@ class dock_gui(QtWidgets.QMainWindow):
         for t, l in enumerate(self.line_edits_all_):
             serialize_dict["line_edit" + str(t)] = l.text()
 
-        if DEBUG: print(serialize_dict)
+        if DEBUG:
+            print(serialize_dict)
 
         out_file = open(self.outdir + "serialize.json", "w")
         json.dump(serialize_dict, out_file, indent=4)
@@ -186,7 +196,8 @@ class dock_gui(QtWidgets.QMainWindow):
         for t, l in enumerate(self.line_edits_all_):
             l.setText(serialize_dict["line_edit" + str(t)])
 
-        if DEBUG: print(serialize_dict, "deserialize_")
+        if DEBUG:
+            print(serialize_dict, "deserialize_")
 
     def save_snap_(self):
         options = QFileDialog.Options()
@@ -209,7 +220,8 @@ class dock_gui(QtWidgets.QMainWindow):
                 if not overwrite_item:
                     return
 
-            if DEBUG: print(f"saving snapshot to {directory}")
+            if DEBUG:
+                print(f"saving snapshot to {directory}")
             cmd.save(directory + "snapshot.pse")
             self.update_history_()
 
@@ -221,7 +233,8 @@ class dock_gui(QtWidgets.QMainWindow):
 
         sorted_keys, max_experiment = sort_history(self.loaded_state)
 
-        if DEBUG: print(sorted_keys, "all keys")
+        if DEBUG:
+            print(sorted_keys, "all keys")
         cleaned_keys: OrderedDict[str, int] = OrderedDict()
         for k in sorted_keys:
             pth = self.directory + "/" + self.project_name + "/" + k
@@ -231,13 +244,14 @@ class dock_gui(QtWidgets.QMainWindow):
                 else:
                     cleaned_keys[k] = 0
 
-        if DEBUG: print(cleaned_keys, "cleaned_keys")
+        if DEBUG:
+            print(cleaned_keys, "cleaned_keys")
 
         self.experiment_nr = max_experiment
         if is_loaded:
             self.experiment_nr += 1
         self.form.lcdNumber.display(self.experiment_nr)
-        
+
         self.form.menuhistory.update_actions_(cleaned_keys)
         if len(cleaned_keys) >= 1:
             self.form.menuhistory.update_history_entries()
@@ -250,7 +264,8 @@ class dock_gui(QtWidgets.QMainWindow):
         pymol_state += "session.pse" if not snap else "snapshot.pse"
         pymol_state = self.directory + self.project_name + "/" + pymol_state
 
-        gui_state_ = "/".join(state["pyqt5"].split("/")[-2:])  # backward compatibility
+        # backward compatibility
+        gui_state_ = "/".join(state["pyqt5"].split("/")[-2:])
         gui_state_ = self.directory + self.project_name + "/" + gui_state_
         print(gui_state_, "GUI_state")
         path = os.path.dirname(gui_state_) + "/*out*"
@@ -276,7 +291,8 @@ class dock_gui(QtWidgets.QMainWindow):
                         f_ = f_[:3]
 
                         counter += 1
-                        message = "  " + str(counter) + (3 - len(str(counter))) * " " + "|"
+                        message = "  " + str(counter) + \
+                            (3 - len(str(counter))) * " " + "|"
                         buffers = [12, 11, 11]
 
                         for t, n in enumerate(f_):
@@ -313,11 +329,13 @@ class dock_gui(QtWidgets.QMainWindow):
         if file_name_ == "":
             return
 
-        self.directory = os.path.dirname((os.path.dirname(self.loaded_state_))) + "/"
+        self.directory = os.path.dirname(
+            (os.path.dirname(self.loaded_state_))) + "/"
         path = Path(self.loaded_state_)
         self.project_name = path.parent.name
 
-        if DEBUG: print(self.directory, "self.directory in load_")
+        if DEBUG:
+            print(self.directory, "self.directory in load_")
 
         self.form.lineEdit.clear()
         self.form.lineEdit.setText(self.project_name)
@@ -336,11 +354,13 @@ class dock_gui(QtWidgets.QMainWindow):
         self.directory = os.getcwd().replace("\\", "/") + "/"
         self.project_name = "Project"
 
-        hosts = os.path.join(os.path.dirname(__file__), "config/config.pickle")
-        with open(hosts, 'rb') as handle:
-            self.hosts = pickle.load(handle)
+        host_path = os.path.join(os.path.dirname(
+            __file__), "config/config.pickle")
+        with open(host_path, 'rb') as handle:
+            hosts = pickle.load(handle)
 
-        self.update_hosts(self.hosts["sean"])
+        self.update_hosts(hosts)
+
         self.form.lineEdit.clear()
         self.form.lineEdit.setText("Project")
 
@@ -403,21 +423,11 @@ class dock_gui(QtWidgets.QMainWindow):
     def update_hosts(self, dictionary):
         self.__dict__.update(dictionary)
 
-    def change_host(self, action):
-        act = action.text()
-        self.update_hosts(self.hosts[act])
-
-        if act == "sean":
-            self.form.actionb.setChecked(False)
-        if act == "david":
-            self.form.actiona.setChecked(False)
+    def change_host(self, new_host):
+        self.hostname = new_host
 
     def check_cpu_count(self):
-        import json
-        pth = os.path.join(os.path.dirname(__file__), "helper/colors.json")
-        with open(pth) as f:
-            data = json.load(f)
-        self.cpu_cnt = data[self.hostname]
+        self.cpu_cnt = 16
         print(self.cpu_cnt)
 
     def docking(self):
@@ -538,14 +548,18 @@ class dock_gui(QtWidgets.QMainWindow):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.load_system_host_keys()
-        ssh.connect(hostname=self.hostname, port=connect_on_port, username=self.username, password=self.password)
+        ssh.connect(hostname=self.hostname, port=connect_on_port,
+                    username=self.username, password=self.password)
 
-        temp_folder = time.ctime().replace(" ", "").replace(":", "") + str(random.randint(0, 10e8))
+        temp_folder = time.ctime().replace(" ", "").replace(
+            ":", "") + str(random.randint(0, 10e8))
 
         remote_file_path = "vina/tempfolders/" + temp_folder
 
-        (stdin, stdout, stderr) = ssh.exec_command(command=f"mkdir {remote_file_path}")
-        (stdin, stdout, stderr) = ssh.exec_command(f"chmod 0777 {remote_file_path}")
+        (stdin, stdout, stderr) = ssh.exec_command(
+            command=f"mkdir {remote_file_path}")
+        (stdin, stdout, stderr) = ssh.exec_command(
+            f"chmod 0777 {remote_file_path}")
         ftp_client = ssh.open_sftp()
 
         if items_ is None:
@@ -558,7 +572,8 @@ class dock_gui(QtWidgets.QMainWindow):
 
         ftp_client.close()
 
-        (stdin, stdout, stderr) = ssh.exec_command(command=f"cd {remote_file_path} && {task}")
+        (stdin, stdout, stderr) = ssh.exec_command(
+            command=f"cd {remote_file_path} && {task}")
 
         for f in stdout.readlines():
             self.log(f)
@@ -569,7 +584,8 @@ class dock_gui(QtWidgets.QMainWindow):
             self.log(f)
             print(f)
 
-        (stdin, stdout, stderr) = ssh.exec_command(command=f"ls {remote_file_path}")
+        (stdin, stdout, stderr) = ssh.exec_command(
+            command=f"ls {remote_file_path}")
 
         retrieve = [x.replace("\n", "") for x in stdout.readlines()]
         retrieve = [x for x in retrieve if x not in os.listdir(self.outdir)]
@@ -580,7 +596,8 @@ class dock_gui(QtWidgets.QMainWindow):
             ftp_client.get(remote_file_path + "/" + r, ff)
         ftp_client.close()
 
-        (stdin, stdout, stderr) = ssh.exec_command(command=f"rm -rf {remote_file_path}")
+        (stdin, stdout, stderr) = ssh.exec_command(
+            command=f"rm -rf {remote_file_path}")
 
     def hydrated_force_field(self):
         current_text = self.form.lineEdit_3.text().strip()
@@ -602,7 +619,8 @@ class dock_gui(QtWidgets.QMainWindow):
         except ValueError:
             pass
 
-        AllItems = [self.form.comboBox_1.itemText(i) for i in range(self.form.comboBox_1.count())]
+        AllItems = [self.form.comboBox_1.itemText(
+            i) for i in range(self.form.comboBox_1.count())]
 
         if selections != AllItems:
             self.update_selections(self.form.comboBox_1, selections)
@@ -677,15 +695,18 @@ class dock_gui(QtWidgets.QMainWindow):
 
         flex_space = {"flex": [], "chain_id": []}
 
-        cmd.iterate(flexible_selection, "flex.append(resn + resi)", space=flex_space)
-        cmd.iterate(flexible_selection, "chain_id.append(chain)", space=flex_space)
+        cmd.iterate(flexible_selection,
+                    "flex.append(resn + resi)", space=flex_space)
+        cmd.iterate(flexible_selection,
+                    "chain_id.append(chain)", space=flex_space)
         chain = flex_space["chain_id"][0]
 
         all_the_flex = list(set(flex_space["flex"]))
 
         if len(all_the_flex) > 20:
             all_the_flex = all_the_flex[:20]
-            print(f"too many flex residues, max nbr: 10, reducing to: {all_the_flex}")
+            print(
+                f"too many flex residues, max nbr: 10, reducing to: {all_the_flex}")
 
         flex_space = "_".join(all_the_flex)
 
@@ -731,12 +752,13 @@ class dock_gui(QtWidgets.QMainWindow):
             file_in = selected + "_preview.sdf"
             file_out = selected + "_preview.pdbqt"
 
-            print(f"cmd.save({self.outdir + file_in}, selection={selected}, state=-1)")
+            print(
+                f"cmd.save({self.outdir + file_in}, selection={selected}, state=-1)")
 
             try:
                 cmd.save(self.outdir + file_in, selection=selected, state=-1)
             except:
-                #trying to fix corrupted molecule objects in pymol. this workaround seems to work
+                # trying to fix corrupted molecule objects in pymol. this workaround seems to work
                 cmd.copy(selected, selected)
                 cmd.save(self.outdir + file_in, selection=selected, state=-1)
 
@@ -756,7 +778,6 @@ class dock_gui(QtWidgets.QMainWindow):
 
         else:
             print("Nothing selected")
-
 
     def create_config_file(self):
         state = cmd.count_states("grid_center")
@@ -793,7 +814,8 @@ class dock_gui(QtWidgets.QMainWindow):
         ligand = self.form.comboBox_3.currentText()
         ligand = ligand + "_preview.pdbqt"
 
-        ligand_atoms, self.is_water = self.return_atom_types(self.outdir + ligand)
+        ligand_atoms, self.is_water = self.return_atom_types(
+            self.outdir + ligand)
 
         if self.form.comboBox_7.currentText() != "None":
             cofactor = self.form.comboBox_7.currentText()
@@ -802,7 +824,8 @@ class dock_gui(QtWidgets.QMainWindow):
         else:
             cofactor = None
 
-        ligand_atoms, self.is_water = self.return_atom_types(self.outdir + ligand, cofactor)
+        ligand_atoms, self.is_water = self.return_atom_types(
+            self.outdir + ligand, cofactor)
 
         FF_script = self.helper_scripts + "prepare_gpf.py"
 
