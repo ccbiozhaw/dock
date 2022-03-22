@@ -108,6 +108,7 @@ class UIFunctions(QtWidgets.QMainWindow):
         self.form.lineEdit_6.textChanged.connect(self.update_box)
 
         # Force Fields
+        self.form.comboBox_5.clear()
         self.form.comboBox_5.addItems(["vina", "ad4"])
         self.form.pushButton_8.clicked.connect(
             functools.partial(self.help_receptor, "ad4_or_vina.ui"))
