@@ -1,4 +1,0 @@
-Thu Sep 23 12:40:53 2021	experimentNr: 1 Describe your experiment
-Thu Sep 23 12:41:08 2021	experimentNr: 2 Describe your experiment
-Thu Sep 23 12:41:17 2021	experimentNr: 3 Describe your experiment
-Thu Sep 23 12:41:24 2021	experimentNr: 4 Describe your experiment

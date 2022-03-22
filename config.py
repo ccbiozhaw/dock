@@ -10,11 +10,12 @@ hosts={
 HOSTS = {
     "ccbio": {
         "alias": "sean",
-        "n_cpu": 16,
+        "num_cpu": 16,
+        "connect_on_port": 77,
     },
     "cctwo": {
         "alias": "david",
-        "n_cpu": 16,
+        "num_cpu": 16,
     },
 }
 

@@ -34,8 +34,7 @@ class QAMenu(QMenu):
     def log_file_editor_(self, edit_id, edit_desc):
         import re
         try:
-            self.log_file_ = self.parent.directory + \
-                self.parent.project_name + "/experiment_log.txt"
+            self.log_file_ = self.parent.state.project_path / "experiment_log.txt"
             log_file = open(self.log_file_, "r").read()
             str_id = f"experimentNr: {edit_id}[^\d]"
             str_id = re.findall(str_id, log_file)
@@ -64,8 +63,7 @@ class QAMenu(QMenu):
         from collections import defaultdict
         import re
 
-        self.log_file_ = self.parent.directory + \
-            self.parent.project_name + "/experiment_log.txt"
+        self.log_file_ = self.parent.state.project_path / "experiment_log.txt"
         log_file_ = open(self.log_file_, "r").readlines()
 
         self.exp_desc_dict = defaultdict(lambda: "no description found")
@@ -92,12 +90,10 @@ class QAMenu(QMenu):
         self.log_file_labels()
         for act in self.actions:
             desc = self.exp_desc_dict[act]
-            print(act, desc)
             self.addAction(QDWidgetAction(self, act, desc))
 
     def remove_history_directory_(self, his):
-        del_dir_ = self.parent.directory + \
-            self.parent.project_name + "/" + str(his)
+        del_dir_ = self.parent.state.project_path / str(his)
         if not DEBUG:
             import shutil
             if DEBUG:
@@ -107,10 +103,11 @@ class QAMenu(QMenu):
 
     def move_history_directory_(self, src, dst):
         import shutil
-        src_dir_ = self.parent.directory + \
-            self.parent.project_name + "/" + str(src) + "/snapshot.pse"
-        dst_dir_ = self.parent.directory + \
-            self.parent.project_name + "/" + str(dst) + "/snapshot.pse"
+        src_dir_ = self.parent.state.project_path / + \
+            str(src) / "snapshot.pse"
+        dst_dir_ = self.parent.state.project_path / \
+            str(dst) / "snapshot.pse"
+
         if DEBUG:
             print(f"{src_dir_}, scr_dir")
         if DEBUG:
@@ -119,8 +116,8 @@ class QAMenu(QMenu):
 
     def remove_history_snapshot(self, src):
         import os
-        src_dir_ = self.parent.directory + \
-            self.parent.project_name + "/" + str(src) + "/snapshot.pse"
+        src_dir_ = self.parent.state.project_path / \
+            str(src) / "snapshot.pse"
         if DEBUG:
             print(f"{src_dir_}, deleting snapshot")
         if not DEBUG:

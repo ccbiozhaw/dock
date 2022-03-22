@@ -3,6 +3,7 @@ import pickle
 import random
 import time
 import os
+from pathlib import Path
 
 from PyQt5.QtCore import QSettings
 from pymol import cmd
@@ -20,7 +21,7 @@ except:
     from pip._internal import main
     main(['install', 'paramiko'])
 
-DEBUG = True
+DEBUG = False
 
 
 class dock_gui(QtWidgets.QMainWindow):
@@ -49,9 +50,6 @@ class dock_gui(QtWidgets.QMainWindow):
         UIFunctions.definitions_(self)
         UIFunctions.inputs_(self, HELP_PATH)
 
-        if DEBUG:
-            self.form.pushButton_1.clicked.connect(self.db)
-
         self.startup_()
 
         self.dragPos = QtCore.QPoint()
@@ -60,7 +58,7 @@ class dock_gui(QtWidgets.QMainWindow):
         try:
             self.serialize_()
             self.deserialize_()
-            print(self.outdir, "self.outdir")
+            print(self.state.outdir, "self.state.outdir")
             print(self.directory, "self.directory")
             print(self.project_name, "self.project_name")
             self.check_cpu_count()
@@ -99,41 +97,39 @@ class dock_gui(QtWidgets.QMainWindow):
         self.startup_()
 
     def save_(self):
-        self.check_outdir()
+        self.state.check_outdir(self)
         self.serialize_()
 
-        cmd.save(self.outdir + "session.pse")
+        cmd.save(self.state.outdir / "session.pse")
         experiment_description = self.form.lineEdit_7.text().strip()
 
-        with open(f"{self.directory + self.project_name}/experiment_log.txt", "a+") as f:
+        with open(self.state.project_path / "experiment_log.txt", "a+") as f:
             f.write(time.ctime() + "\t" + "experimentNr: " + str(
-                self.experiment_nr) + " " + experiment_description + "\n")
+                self.state.experiment_nr) + " " + experiment_description + "\n")
 
-        exp_label = str(self.experiment_nr) if not self.debug else "temp"
+        exp_label = str(self.state.experiment_nr) if not self.debug else "temp"
 
         restore = {
             exp_label: {
-                "pymol": self.outdir + "session.pse",
-                "pyqt5": self.outdir + "serialize.json",
+                "pymol":  "session.pse",
+                "pyqt5":  "serialize.json",
             }
         }
 
-        self.loaded_state_ = self.directory + self.project_name + "/" + 'restore.pickle'
-
-        if os.path.exists(self.loaded_state_):
-            with open(self.loaded_state_, 'rb') as handle:
+        if os.path.exists(self.state.state_path):
+            with open(self.state.state_path, 'rb') as handle:
                 update_restore = pickle.load(handle)
 
             update_restore.update(restore)
 
-            with open(self.loaded_state_, 'wb') as handle:
+            with open(self.state.state_path, 'wb') as handle:
                 pickle.dump(update_restore, handle, protocol=4)
 
         else:
-            with open(self.loaded_state_, 'wb') as handle:
+            with open(self.state.state_path, 'wb') as handle:
                 pickle.dump(restore, handle, protocol=4)
 
-        self.update_history_()
+        self.state.update_history(self)
 
     def serialize_(self):
         from collections import OrderedDict
@@ -174,7 +170,7 @@ class dock_gui(QtWidgets.QMainWindow):
         if DEBUG:
             print(serialize_dict)
 
-        out_file = open(self.outdir + "serialize.json", "w")
+        out_file = open(self.state.outdir / "serialize.json", "w")
         json.dump(serialize_dict, out_file, indent=4)
         out_file.close()
 
@@ -203,9 +199,9 @@ class dock_gui(QtWidgets.QMainWindow):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         options |= QFileDialog.Option.ShowDirsOnly
-        experiment_path = self.directory + self.project_name
+
         directory = QFileDialog.getExistingDirectory(
-            self.form, 'Select a directory', experiment_path, options=options, ) + "/"
+            self.form, 'Select a directory', str(self.state.project_path), options=options, ) + "/"
         if directory == "/":
             return
         else:
@@ -223,56 +219,21 @@ class dock_gui(QtWidgets.QMainWindow):
             if DEBUG:
                 print(f"saving snapshot to {directory}")
             cmd.save(directory + "snapshot.pse")
-            self.update_history_()
-
-    def update_history_(self, is_loaded=False):
-        from collections import OrderedDict
-
-        with open(self.loaded_state_, 'rb') as handle:
-            self.loaded_state = pickle.load(handle)
-
-        sorted_keys, max_experiment = sort_history(self.loaded_state)
-
-        if DEBUG:
-            print(sorted_keys, "all keys")
-        cleaned_keys: OrderedDict[str, int] = OrderedDict()
-        for k in sorted_keys:
-            pth = self.directory + "/" + self.project_name + "/" + k
-            if os.path.exists(pth):
-                if os.path.exists(pth + "/snapshot.pse"):
-                    cleaned_keys[k] = 1
-                else:
-                    cleaned_keys[k] = 0
-
-        if DEBUG:
-            print(cleaned_keys, "cleaned_keys")
-
-        self.experiment_nr = max_experiment
-        if is_loaded:
-            self.experiment_nr += 1
-        self.form.lcdNumber.display(self.experiment_nr)
-
-        self.form.menuhistory.update_actions_(cleaned_keys)
-        if len(cleaned_keys) >= 1:
-            self.form.menuhistory.update_history_entries()
+            self.state.update_history(self)
 
     def restore_(self, act, snap=False):
         import glob
-        state = self.loaded_state[act]
 
-        pymol_state = f"{act}/"
-        pymol_state += "session.pse" if not snap else "snapshot.pse"
-        pymol_state = self.directory + self.project_name + "/" + pymol_state
+        state = self.state.loaded_restore[act]
+
+        session_type = "session.pse" if not snap else "snapshot.pse"
+        pymol_state = self.state.project_path / str(act) / session_type
 
         # backward compatibility
         gui_state_ = "/".join(state["pyqt5"].split("/")[-2:])
-        gui_state_ = self.directory + self.project_name + "/" + gui_state_
-        print(gui_state_, "GUI_state")
+        gui_state_ = self.state.project_path / str(act) / gui_state_
         path = os.path.dirname(gui_state_) + "/*out*"
         results_file_ = glob.glob(path)
-
-        print(pymol_state, "pymol_state")
-        print(results_file_, "results_file_")
 
         cmd.reinitialize()
         cmd.load(pymol_state)
@@ -301,12 +262,7 @@ class dock_gui(QtWidgets.QMainWindow):
 
                         print(message)
 
-        if gui_state_.endswith(".ini"):
-            # old versions
-            settings = QSettings(gui_state_, QSettings.IniFormat)
-            settings_restore(settings, self.form)
-        else:
-            self.deserialize_(gui_state_)
+        self.deserialize_(gui_state_)
 
         self.box_me()
         self.form.menuhistory.close()
@@ -322,43 +278,37 @@ class dock_gui(QtWidgets.QMainWindow):
         options = QtWidgets.QFileDialog.Options()
         #options |= QtWidgets.QFileDialog.DontUseNativeDialog
 
-        self.loaded_state_, file_name_ = QtWidgets.QFileDialog.getOpenFileName(self.form,
-                                                                               "restore", "./",
-                                                                               "states (*.pickle);;All Files (*)",
-                                                                               options=options)
-        if file_name_ == "":
+        state_path, file_name = QtWidgets.QFileDialog.getOpenFileName(self.form,
+                                                                      "restore", "./",
+                                                                      "states (*.pickle);;All Files (*)",
+                                                                      options=options)
+
+        if file_name == "":
             return
 
-        self.directory = os.path.dirname(
-            (os.path.dirname(self.loaded_state_))) + "/"
-        path = Path(self.loaded_state_)
-        self.project_name = path.parent.name
+        self.state.directory = Path(
+            os.path.dirname((os.path.dirname(state_path))))
 
-        if DEBUG:
-            print(self.directory, "self.directory in load_")
+        path = Path(state_path)
+        self.state.project_name = path.parent.name
+        self.state.state_path = path
 
         self.form.lineEdit.clear()
-        self.form.lineEdit.setText(self.project_name)
+        self.form.lineEdit.setText(self.state.project_name)
 
-        self.update_history_(True)
+        self.state.update_history(self)
 
     def startup_(self):
         self.debug = 0
         self.verbose = 1
-        self.experiment_nr = 1
-        self.form.lcdNumber.display(self.experiment_nr)
 
-        self.loaded_state_ = None
-
-        path = os.path.join(os.getcwd(), "tempfiles")
-        self.directory = os.getcwd().replace("\\", "/") + "/"
-        self.project_name = "Project"
+        self.state = history_state()
+        self.form.lcdNumber.display(self.state.experiment_nr)
 
         host_path = os.path.join(os.path.dirname(
             __file__), "config/config.pickle")
         with open(host_path, 'rb') as handle:
             hosts = pickle.load(handle)
-
         self.update_hosts(hosts)
 
         self.form.lineEdit.clear()
@@ -376,28 +326,10 @@ class dock_gui(QtWidgets.QMainWindow):
         if directory == "/":
             return
         else:
-            self.directory = directory
-            print(self.directory)
-
-    def check_outdir(self):
-        # self.update_debug_()
-        self.project_name = self.form.lineEdit.text().strip()
-        self.outdir = self.directory + self.project_name + "/"
-        os.makedirs(self.outdir, exist_ok=True)
-        if self.loaded_state_ == None and "restore.pickle" in os.listdir(self.outdir):
-            self.loaded_state_ = self.outdir + "restore.pickle"
-            self.update_history_(True)
-
-        if self.debug:
-            self.outdir += "tempfiles/"
-            os.makedirs(self.outdir, exist_ok=True)
-        else:
-            self.outdir += f"{str(self.experiment_nr)}/"
-            os.makedirs(self.outdir, exist_ok=True)
-        print(self.outdir)
+            self.state.directory = directory
 
     def log(self, message):
-        with open(self.outdir + "log.txt", "a+") as f:
+        with open(self.state.outdir / "log.txt", "a+") as f:
             f.write(message + "\n")
         f.close()
 
@@ -431,17 +363,15 @@ class dock_gui(QtWidgets.QMainWindow):
         print(self.cpu_cnt)
 
     def docking(self):
-        import glob
-
-        print(self.experiment_nr)
 
         self.check_cpu_count()
         if self.cpu_cnt == 0:
             print("Host unavailable")
             return
 
-        self.check_outdir()
-        for f in glob.glob(self.outdir + "*"):
+        self.state.check_outdir(self)
+
+        for f in self.state.outdir.glob("*"):
             os.remove(f)
 
         self.process_ligand()
@@ -498,7 +428,7 @@ class dock_gui(QtWidgets.QMainWindow):
                 task = f"{self.pythonsh} {dry_script} -r {gpf_out + '.pdbqt'} -m {gpf_out}.W.map -i {out_name}"
                 self.sync_to_remote_and_task(task)
 
-            cmd.load(self.outdir + out_name)
+            cmd.load(self.state.outdir / out_name)
             out_sticks = ".".join(out_name.split(".")[:-1])
             cmd.show("licorice", out_sticks)
             cmd.set_view(curr_v)
@@ -522,22 +452,19 @@ class dock_gui(QtWidgets.QMainWindow):
             self.sync_to_remote_and_task(task, sc=1)
             self.convert_output_to_mol2(out_name)
 
-            cmd.load(self.outdir + out_name)
+            cmd.load(self.state.outdir / out_name)
             out_sticks = ".".join(out_name.split(".")[:-1])
             cmd.show("licorice", out_sticks)
             cmd.set_view(curr_v)
 
         self.save_()
-        self.update_history_(True)
-
-        print(self.experiment_nr)
 
     def convert_output_to_mol2(self, out_name):
         task = "/bin/bash /home/ubuntu/ADFRsuite_x86_64Linux_1.0/bin/obabel -i" \
                f" pdbqt {out_name} -o mol2 -O converted_poses.mol2"
         self.sync_to_remote_and_task(task, [out_name], sc=1)
         cmd.delete("converted_poses")
-        cmd.load(self.outdir + "converted_poses.mol2")
+        cmd.load(self.state.outdir / "converted_poses.mol2")
         cmd.show("licorice", "converted_poses")
         cmd.disable("converted_poses")
 
@@ -563,10 +490,10 @@ class dock_gui(QtWidgets.QMainWindow):
         ftp_client = ssh.open_sftp()
 
         if items_ is None:
-            items_ = os.listdir(self.outdir)
+            items_ = os.listdir(self.state.outdir)
 
         for f in items_:
-            ff = os.path.join(self.outdir, f)
+            ff = os.path.join(self.state.outdir, f)
             ff_remote = remote_file_path + "/" + f
             ftp_client.put(ff, ff_remote)
 
@@ -588,11 +515,12 @@ class dock_gui(QtWidgets.QMainWindow):
             command=f"ls {remote_file_path}")
 
         retrieve = [x.replace("\n", "") for x in stdout.readlines()]
-        retrieve = [x for x in retrieve if x not in os.listdir(self.outdir)]
+        retrieve = [x for x in retrieve if x not in os.listdir(
+            self.state.outdir)]
 
         ftp_client = ssh.open_sftp()
         for r in retrieve:
-            ff = os.path.join(self.outdir, r)
+            ff = os.path.join(self.state.outdir, r)
             ftp_client.get(remote_file_path + "/" + r, ff)
         ftp_client.close()
 
@@ -640,17 +568,20 @@ class dock_gui(QtWidgets.QMainWindow):
         combobox.setCurrentIndex(idx)
 
     def process_receptor(self):
-        self.check_outdir()
+        self.state.check_outdir(self)
+        print(self.state.experiment_nr, "EEEEEEE")
+        print(self.state.outdir, "outdir")
+
         curr_v = cmd.get_view()
 
         selected = self.form.comboBox_1.currentText()
         outfile = selected + "_preview.pdb"
         outfile_pdbqt = selected + "_preview.pdbqt"
 
-        if os.path.exists(self.outdir + outfile):
-            os.remove(self.outdir + outfile)
-        if os.path.exists(self.outdir + outfile_pdbqt):
-            os.remove(self.outdir + outfile_pdbqt)
+        if os.path.exists(self.state.outdir / outfile):
+            os.remove(self.state.outdir / outfile)
+        if os.path.exists(self.state.outdir / outfile_pdbqt):
+            os.remove(self.state.outdir / outfile_pdbqt)
 
         cmd.delete("rigid_receptor_preview")
 
@@ -664,20 +595,21 @@ class dock_gui(QtWidgets.QMainWindow):
         flags = self.form.lineEdit_1.text().strip()
 
         if selected != "None":
-            cmd.save(self.outdir + outfile, selection=selected, state=-1)
+            cmd.save(self.state.outdir / outfile, selection=selected, state=-1)
 
             file_pdbqt = selected + "_preview.pdbqt"
             prep_receptor_script = self.ADFRsuite + "prepare_receptor"
             task = f"{prep_receptor_script} -r {outfile} -o {file_pdbqt} {flags} "
             self.sync_to_remote_and_task(task, [outfile])
-            cmd.load(self.outdir + outfile_pdbqt, "rigid_receptor_preview")
+            cmd.load(self.state.outdir / outfile_pdbqt,
+                     "rigid_receptor_preview")
 
             cmd.set_view(curr_v)
         else:
             print("Nothing selected")
 
     def flexible_receptor(self):
-        self.check_outdir()
+        self.state.check_outdir(self)
 
         receptor_selection = self.form.comboBox_1.currentText()
         flexible_selection = self.form.comboBox_2.currentText()
@@ -719,10 +651,10 @@ class dock_gui(QtWidgets.QMainWindow):
         rigid_output = receptor_selection + "_receptor_rigid.pdbqt"
         flexible_output = receptor_selection + "_receptor_flex.pdbqt"
 
-        if os.path.exists(self.outdir + rigid_output):
-            os.remove(self.outdir + rigid_output)
-        if os.path.exists(self.outdir + flexible_output):
-            os.remove(self.outdir + flexible_output)
+        if os.path.exists(self.state.outdir / rigid_output):
+            os.remove(self.state.outdir / rigid_output)
+        if os.path.exists(self.state.outdir / flexible_output):
+            os.remove(self.state.outdir / flexible_output)
 
         task = f"{self.pythonsh} {flexreceptor_script} -r {receptor_pdbqt} -s {flex_space} {flags} \
              -g {rigid_output} -x {flexible_output}"
@@ -730,7 +662,7 @@ class dock_gui(QtWidgets.QMainWindow):
         self.sync_to_remote_and_task(task, [receptor_pdbqt])
 
     def process_ligand(self, lig_n=0):
-        self.check_outdir()
+        self.state.check_outdir(self)
 
         curr_v = cmd.get_view()
 
@@ -744,23 +676,21 @@ class dock_gui(QtWidgets.QMainWindow):
         outfile = selected + "_preview.pdbqt"
         cmd.delete(preview_name)
 
-        if os.path.exists(self.outdir + outfile):
-            os.remove(self.outdir + outfile)
+        if os.path.exists(self.state.outdir / outfile):
+            os.remove(self.state.outdir / outfile)
 
         if selected != "None":
-
             file_in = selected + "_preview.sdf"
             file_out = selected + "_preview.pdbqt"
 
-            print(
-                f"cmd.save({self.outdir + file_in}, selection={selected}, state=-1)")
-
             try:
-                cmd.save(self.outdir + file_in, selection=selected, state=-1)
+                cmd.save(self.state.outdir / file_in,
+                         selection=selected, state=-1)
             except:
                 # trying to fix corrupted molecule objects in pymol. this workaround seems to work
                 cmd.copy(selected, selected)
-                cmd.save(self.outdir + file_in, selection=selected, state=-1)
+                cmd.save(self.state.outdir / file_in,
+                         selection=selected, state=-1)
 
             ligand_script = "/home/ubuntu/miniconda3/condabin/conda run mk_prepare_ligand.py"
 
@@ -773,7 +703,7 @@ class dock_gui(QtWidgets.QMainWindow):
 
             self.sync_to_remote_and_task(task, [file_in])
 
-            cmd.load(self.outdir + outfile, preview_name)
+            cmd.load(self.state.outdir / outfile, preview_name)
             cmd.set_view(curr_v)
 
         else:
@@ -784,10 +714,10 @@ class dock_gui(QtWidgets.QMainWindow):
         coords = cmd.get_coordset("grid_center", state)
         pX, pY, pZ = [x.round(1) for x in coords.astype("float32")[0]]
 
-        if os.path.exists(self.outdir + "config.txt"):
-            os.remove(self.outdir + "config.txt")
+        if os.path.exists(self.state.outdir / "config.txt"):
+            os.remove(self.state.outdir / "config.txt")
 
-        with open(self.outdir + "config.txt", "a+") as f:
+        with open(self.state.outdir / "config.txt", "a+") as f:
             f.write(f"center_x = {pX}\n")
             f.write(f"center_y = {pY}\n")
             f.write(f"center_z = {pZ}\n")
@@ -815,17 +745,17 @@ class dock_gui(QtWidgets.QMainWindow):
         ligand = ligand + "_preview.pdbqt"
 
         ligand_atoms, self.is_water = self.return_atom_types(
-            self.outdir + ligand)
+            self.state.outdir + ligand)
 
         if self.form.comboBox_7.currentText() != "None":
             cofactor = self.form.comboBox_7.currentText()
             cofactor = cofactor + "_preview.pdbqt"
-            cofactor = self.outdir + cofactor
+            cofactor = self.state.outdir + cofactor
         else:
             cofactor = None
 
         ligand_atoms, self.is_water = self.return_atom_types(
-            self.outdir + ligand, cofactor)
+            self.state.outdir + ligand, cofactor)
 
         FF_script = self.helper_scripts + "prepare_gpf.py"
 
