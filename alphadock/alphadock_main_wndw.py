@@ -1,4 +1,3 @@
-from distutils.command.config import config
 import math
 import pickle
 import random
@@ -6,7 +5,6 @@ import time
 import os
 from pathlib import Path
 
-from PyQt5.QtCore import QSettings
 from pymol import cmd
 from pymol.Qt import QtWidgets
 from pymol.Qt.utils import loadUi
