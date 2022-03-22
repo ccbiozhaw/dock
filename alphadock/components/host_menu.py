@@ -12,14 +12,14 @@ class QAMenuHosts(QMenu):
 
         for t, (k, v) in enumerate(self.hosts.items()):
             action = QAction(v["alias"], self, triggered=partial(
-                self.change_host_and_update_ticks, k, t))
+                self.change_host_and_update_ticks, k, v, t))
             action.setCheckable(True)
             self.addAction(action)
             if t == 0:
-                self.change_host_and_update_ticks(k, t)
+                self.change_host_and_update_ticks(k, v, t)
 
-    def change_host_and_update_ticks(self, new_host, idx):
-        self.parent.change_host(new_host)
+    def change_host_and_update_ticks(self, new_host, configs, idx):
+        self.parent.change_host(new_host, configs)
         for act in self.actions():
             act.setChecked(False)
         self.actions()[idx].setChecked(True)

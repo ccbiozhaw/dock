@@ -18,11 +18,8 @@ class history_state:
         self.project_name = parent.form.lineEdit.text().strip()
 
         os.makedirs(self.project_path, exist_ok=True)
-        if self.state_path == None and "restore.pickle" in os.listdir(self.project_path):
-            self.state_path = self.project_path / "restore.pickle"
-            self.update_history(parent)
-        else:
-            self.state_path = self.project_path / "restore.pickle"
+        self.state_path = self.project_path / "restore.pickle"
+        self.update_history(parent)
 
         if parent.debug:
             self.outdir = self.project_path / "tempfiles"
@@ -34,20 +31,30 @@ class history_state:
         print(self.outdir)
 
     def update_history_state(self):
-        with open(self.state_path, 'rb') as handle:
-            self.loaded_restore = pickle.load(handle)
+
+        if os.path.exists(self.state_path):
+            with open(self.state_path, 'rb') as handle:
+                self.loaded_restore = pickle.load(handle)
+        else:
+            self.loaded_restore = {}
 
         sorted_keys, max_experiment = self.sort_history(self.loaded_restore)
         self.experiment_nr = max_experiment
         return self.get_cleaned_keys(sorted_keys)
 
     def update_history(self, parent):
+
         cleaned_keys = self.update_history_state()
+
         parent.form.lcdNumber.display(self.experiment_nr)
         parent.form.menuhistory.update_actions_(cleaned_keys)
 
         if len(cleaned_keys) >= 1:
             parent.form.menuhistory.update_history_entries()
+        else:
+            parent.form.menuhistory.clear()
+
+
 
     def get_cleaned_keys(self, sorted_keys):
         cleaned_keys: OrderedDict[str, int] = OrderedDict()
@@ -71,7 +78,7 @@ class history_state:
         d = [str(x) for x in d]
         return d, max_experiment
 
-    @ property
+    @property
     def project_path(self):
         newpath = self.directory / self.project_name
         return newpath

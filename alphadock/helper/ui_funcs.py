@@ -186,7 +186,6 @@ class UIFunctions(QtWidgets.QMainWindow):
         settings_menu.addAction(self.actionclean_up)
         settings_menu.addAction(self.actionplayground)
 
-        host_menu = QtWidgets.QMenu()
         settings_menu.setStyleSheet(
             menu_style.replace("potatofix", script_dir))
 

@@ -1,3 +1,4 @@
+from distutils.command.config import config
 import math
 import pickle
 import random
@@ -129,7 +130,7 @@ class dock_gui(QtWidgets.QMainWindow):
             with open(self.state.state_path, 'wb') as handle:
                 pickle.dump(restore, handle, protocol=4)
 
-        self.state.update_history(self)
+        self.state.check_outdir(self)
 
     def serialize_(self):
         from collections import OrderedDict
@@ -291,12 +292,11 @@ class dock_gui(QtWidgets.QMainWindow):
 
         path = Path(state_path)
         self.state.project_name = path.parent.name
-        self.state.state_path = path
 
         self.form.lineEdit.clear()
         self.form.lineEdit.setText(self.state.project_name)
 
-        self.state.update_history(self)
+        self.state.check_outdir(self)
 
     def startup_(self):
         self.debug = 0
@@ -326,7 +326,7 @@ class dock_gui(QtWidgets.QMainWindow):
         if directory == "/":
             return
         else:
-            self.state.directory = directory
+            self.state.directory = Path(directory)
 
     def log(self, message):
         with open(self.state.outdir / "log.txt", "a+") as f:
@@ -355,16 +355,21 @@ class dock_gui(QtWidgets.QMainWindow):
     def update_hosts(self, dictionary):
         self.__dict__.update(dictionary)
 
-    def change_host(self, new_host):
+    def change_host(self, new_host, configs):
         self.hostname = new_host
 
-    def check_cpu_count(self):
-        self.cpu_cnt = 16
-        print(self.cpu_cnt)
+        if "num_cpu" in configs.keys():
+            self.cpu_cnt = configs["num_cpu"]
+        else:
+            self.cpu_cnt = 4
+
+        if "connect_on_port" in configs.keys():
+            self.connect_on_port = configs["connect_on_port"]
+        else:
+            self.connect_on_port = 77
 
     def docking(self):
 
-        self.check_cpu_count()
         if self.cpu_cnt == 0:
             print("Host unavailable")
             return
@@ -471,11 +476,10 @@ class dock_gui(QtWidgets.QMainWindow):
     def sync_to_remote_and_task(self, task, items_=None, sc=0):
         self.log(task)
 
-        connect_on_port = 77
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.load_system_host_keys()
-        ssh.connect(hostname=self.hostname, port=connect_on_port,
+        ssh.connect(hostname=self.hostname, port=self.connect_on_port,
                     username=self.username, password=self.password)
 
         temp_folder = time.ctime().replace(" ", "").replace(
@@ -569,8 +573,6 @@ class dock_gui(QtWidgets.QMainWindow):
 
     def process_receptor(self):
         self.state.check_outdir(self)
-        print(self.state.experiment_nr, "EEEEEEE")
-        print(self.state.outdir, "outdir")
 
         curr_v = cmd.get_view()
 
