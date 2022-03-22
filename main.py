@@ -37,7 +37,7 @@ def run_plugin_gui():
 
 
 if __name__ == "__main__":
-    print("MAIN?")
+    print("MAIN")
     app = QApplication(sys.argv)
 
     wnd = dock_gui()
