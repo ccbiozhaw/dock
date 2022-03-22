@@ -6,12 +6,10 @@ import os
 import sys
 
 sys.path.insert(1, os.path.dirname(__file__))
-print(os.path.dirname(__file__), "DIRNAME")
 
-from PyQt5.QtWidgets import QApplication
 from alphadock.alphadock_main_wndw import dock_gui
+from PyQt5.QtWidgets import QApplication
 
-print("attempting to import from")
 
 
 def __init_plugin__(app=None):
