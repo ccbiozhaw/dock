@@ -8,13 +8,13 @@ hosts={
 """
 
 HOSTS = {
-    "ccbio": {
-        "alias": "sean",
+    "cctwo": {
+        "alias": "david",
         "num_cpu": 20,
         "connect_on_port": 77,
     },
-    "cctwo": {
-        "alias": "david",
+    "ccbio": {
+        "alias": "sean",
         "num_cpu": 16,
     },
 }

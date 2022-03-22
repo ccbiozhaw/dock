@@ -418,11 +418,11 @@ class dock_gui(QtWidgets.QMainWindow):
             flags = self.form.lineEdit_8.text().strip()
 
             if self.form.comboBox_2.currentText() == "None":
-                task = f"./../../vina_1.2.2_linux_x86_64 --ligand {ligand} {cofactor} " \
+                task = f"./../../vina_1.2.3_linux_x86_64 --ligand {ligand} {cofactor} " \
                        f"--maps {gpf_out} --scoring ad4 --cpu {self.cpu_cnt} " \
                        f"{flags} --out {out_name}"
             else:
-                task = f"./../../vina_1.2.2_linux_x86_64 --ligand {ligand} {cofactor}--flex {receptor_flex}" \
+                task = f"./../../vina_1.2.3_linux_x86_64 --ligand {ligand} {cofactor}--flex {receptor_flex}" \
                        f" --maps {gpf_out} --scoring ad4 --cpu {self.cpu_cnt} " \
                        f"{flags} --out {out_name}"
 
@@ -430,7 +430,7 @@ class dock_gui(QtWidgets.QMainWindow):
 
             if self.is_water:
                 dry_script = self.helper_scripts + "dry.py"
-                task = f"{self.pythonsh} {dry_script} -r {gpf_out + '.pdbqt'} -m {gpf_out}.W.map -i {out_name}"
+                task = f"{self.python3} {dry_script} -r {gpf_out + '.pdbqt'} -m {gpf_out}.W.map -i {out_name}"
                 self.sync_to_remote_and_task(task)
 
             cmd.load(self.state.outdir / out_name)
@@ -446,11 +446,11 @@ class dock_gui(QtWidgets.QMainWindow):
             flags = self.form.lineEdit_8.text().strip()
             self.create_config_file()
             if self.form.comboBox_2.currentText() == "None":
-                task = f"./../../vina_1.2.2_linux_x86_64 --receptor {receptor} --ligand {ligand} {cofactor}" \
+                task = f"./../../vina_1.2.3_linux_x86_64 --receptor {receptor} --ligand {ligand} {cofactor}" \
                        f" --config config.txt --cpu {self.cpu_cnt}" \
                        f" {flags} --out {out_name}"
             else:
-                task = f"./../../vina_1.2.2_linux_x86_64 --receptor {receptor_rigid} --ligand {ligand} {cofactor}" \
+                task = f"./../../vina_1.2.3_linux_x86_64 --receptor {receptor_rigid} --ligand {ligand} {cofactor}" \
                        f" --flex {receptor_flex} --config config.txt --cpu {self.cpu_cnt}" \
                        f" {flags} --out {out_name}"
 
@@ -747,17 +747,17 @@ class dock_gui(QtWidgets.QMainWindow):
         ligand = ligand + "_preview.pdbqt"
 
         ligand_atoms, self.is_water = self.return_atom_types(
-            self.state.outdir + ligand)
+            self.state.outdir / ligand)
 
         if self.form.comboBox_7.currentText() != "None":
             cofactor = self.form.comboBox_7.currentText()
             cofactor = cofactor + "_preview.pdbqt"
-            cofactor = self.state.outdir + cofactor
+            cofactor = self.state.outdir / cofactor
         else:
             cofactor = None
 
         ligand_atoms, self.is_water = self.return_atom_types(
-            self.state.outdir + ligand, cofactor)
+            self.state.outdir / ligand, cofactor)
 
         FF_script = self.helper_scripts + "prepare_gpf.py"
 
@@ -785,7 +785,7 @@ class dock_gui(QtWidgets.QMainWindow):
         if self.is_water:
             water_script = self.helper_scripts + "mapwater.py"
             out_rec = ".".join(receptor.split(".")[:-1])
-            task = f"{self.pythonsh} {water_script} -r {receptor} -s {out_rec}.W.map"
+            task = f"{self.python3} {water_script} -r {receptor} -s {out_rec}.W.map"
             self.sync_to_remote_and_task(task)
 
     def return_atom_types(self, filename, file_b=None):
