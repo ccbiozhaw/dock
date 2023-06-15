@@ -54,12 +54,15 @@ The inputs for the application are PyMOL objects/selections. You can find a drop
 
 If you are not sure if you did it right, click the “preview” button. It will take your selection and pre-process it, as it would during the docking procedure, then display it as “receptor_rigid_preview” or “ligand_preview”.
 
-Input options:
+**Input options**:
 
-rigid: refers to the basic receptor you are used to from chimera. It means that the structure is rigid, and residues are unable to move. However, as this plugin also allows flexible residues, a distinction is necessary.
-flex: select residues that you want to keep flexible. This is pretty computationally expensive, and if you select too many, it will not generate meaningful results. I limited the maximum number of flexible residues to 10. If you select more, only the first 10 are processed. The preview function here is only meant to validate the pre-processing (if you get a “finished!” everything worked fine), however, displaying the flexible .pdbqt is senseless.
-ligand: select a ligand for your docking.
-cofactor: allows for the selection of a second “ligand”. Both of them are flexible (→ multi ligand docking). The functionality is the same as for ligands.
+**rigid**: refers to the basic receptor you are used to from chimera. It means that the structure is rigid, and residues are unable to move. However, as this plugin also allows flexible residues, a distinction is necessary.  
+
+**flex**: select residues that you want to keep flexible. This is pretty computationally expensive, and if you select too many, it will not generate meaningful results. I limited the maximum number of flexible residues to 10. If you select more, only the first 10 are processed. The preview function here is only meant to validate the pre-processing (if you get a “finished!” everything worked fine), however, displaying the flexible .pdbqt is senseless.
+
+**ligand**: select a ligand for your docking.
+
+**cofactor**: allows for the selection of a second “ligand”. Both of them are flexible (→ multi ligand docking). The functionality is the same as for ligands.
 
 #### Box
 
