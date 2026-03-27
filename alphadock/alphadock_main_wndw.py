@@ -481,7 +481,7 @@ class dock_gui(QtWidgets.QMainWindow):
                     username=self.username, password=self.password)
 
         temp_folder = time.ctime().replace(" ", "").replace(
-            ":", "") + str(random.randint(0, 10e8))
+            ":", "") + str(random.randint(0, 10**9))
 
         remote_file_path = "vina/tempfolders/" + temp_folder
 
